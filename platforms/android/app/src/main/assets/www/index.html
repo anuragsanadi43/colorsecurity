@@ -1,0 +1,177 @@
+<html>
+    <head>
+		<script src="js/jquery.js"></script>
+    </head>
+    <body onload="GetData()">
+        <style>
+            .organize {
+                display: inline;
+            }
+
+            .passButtons {
+                border-radius: 6px;
+                font-size: 18px;
+            }
+            
+            .hideAddButton {
+            	display:none;
+            }
+
+			.Correct {
+				width:100%;
+				height: 20px;
+				text-align:center;
+				color:white;
+				background-color:green;
+				font-size: 15px;
+			}
+
+			.Wrong {
+				width:100%;
+				height: 20px;
+				text-align:center;
+				color:white;
+				background-color:red;
+				font-size: 15px;
+			}
+
+			#ShowPassword {
+				text-decoration:none;
+				color:blue;
+				position:absolute;
+				right:20;
+				font-size:17px;
+				margin-top:-34px;
+			}
+            
+        </style>
+
+        <div id="organize">
+        <!-- All the buttons to be clicked -->    
+        </div>
+        <br><br>
+        
+        <button style="width:100%; height:30px; border-radius:6px; background-color:blueviolet; border-color:blueviolet; color:white" onclick="AddPasswordToDatabase()" id="clickMe">Set Password</button>
+
+		<p id="PasswordStatus"></p>
+        <p id="password">Your entered: </p>
+		<a href="#" id="ShowPassword">Show Password</a>
+        <p id="textToDatabase" style="position:absolute; right:20px;margin-top:-15px;color:darkorange"></p>
+		
+
+    <script>
+    			var db = window.openDatabase("User Password", "1.0", "Store Password of the user", 15);
+    			db.transaction(CreateTable);
+    			
+    			function CreateTable(tx) {
+    				tx.executeSql("create table if not exists UsPassword(ID INT, Pass TEXT)");
+    				//tx.executeSql("delete from UsPassword where ID=1");
+    				//tx.executeSql("insert into UsPassword values(1, 'Hello', 'Password Added')");
+    				//tx.executeSql("delete from UsPassword where ID>1");
+    			}
+
+    			var DbPassword = "";
+				var Color_Array = [];
+
+                var button_colors = ["red", "brown", "blue", "yellow", "black", "magenta", "lightgray", "orange", "yellowgreen", "indigo", "lightblue", "khaki"];
+
+                for(i=button_colors.length; i>0; i--) {
+                    var GetRandomNum = Math.floor((Math.random() * i) + 0);
+                   	document.getElementById("organize").innerHTML+="<button style='width:23.5%; height:23%; background-color:"+button_colors[GetRandomNum]+"; border-color:"+button_colors[GetRandomNum]+"' id='"+button_colors[GetRandomNum]+"' class='buttonSelector'></button>";
+
+                    button_colors.splice(GetRandomNum, 1);
+                }
+
+
+					$(function() {
+						$("#textToDatabase").hide();
+
+						$(".buttonSelector").click(function() {
+							DbPassword+=this.id.slice(0, this.id.length)+' ';
+							Color_Array.push($(this).attr("id"));
+							$("#password").append("<div style='width:10px;height:10px;display:inline-block;border:0.5px solid black;background-color:"+$(this).attr('id')+"'></div>");
+							//console.log(Color_Array);
+							//console.log(DbPassword);
+						});
+
+						$("#ShowPassword").click(function() {
+							$("#textToDatabase").slideToggle();
+						});
+					});
+                	
+                	function AddPasswordToDatabase() {
+                		var db = openDatabase("User Password", "1.0", "Store Password of the user", 15);
+        				db.transaction(insertData);
+        				
+                	}
+                	
+                	function insertData(tx) {
+						if(Color_Array.length == 4) {
+							tx.executeSql("insert into UsPassword values(1, '"+DbPassword+"')");
+                			document.getElementById("clickMe").setAttribute("class", "hideAddButton");
+							alert("You need to relaunch your app now");
+						} else {
+							alert("Enter a password 4 digits long");
+							tx.executeSql("delete from UsPassword where ID=1");
+							document.getElementById("password").innerHTML = "Your entered: ";
+							DbPassword = "";
+							while(Color_Array.length>0) {
+								Color_Array.pop();
+							}
+						}
+                		
+                		
+                	}
+                	
+                	function GetData() {
+                		var db = openDatabase("User Password", "1.0", "Store Password of the user", 15);
+        				db.transaction(FetchData);
+                	}
+                	
+                	function FetchData(tx) {
+                		tx.executeSql("select * from UsPassword", [], resultSuccess);
+                	}
+                	
+                	function resultSuccess(tx, response) {
+                			var GetPassword = response.rows.item(0).Pass;
+							if(GetPassword !== "") {
+								document.getElementById("clickMe").setAttribute("class", "hideAddButton");
+                    			document.getElementById("textToDatabase").innerHTML = GetPassword.slice(0, GetPassword.length-1);
+                    			document.getElementById("password").innerHTML = "Your entered: ";
+
+								$(function() { // JQuery function starts inside  the if statement
+									$(".buttonSelector").click(function() {
+									if(DbPassword === GetPassword && Color_Array.length == 4) {
+										//console.log("Password is correct");
+										var PasswordStatus = document.getElementById("PasswordStatus");
+										PasswordStatus.innerHTML = "Password is correct";
+										PasswordStatus.setAttribute("class", "Correct");
+										DbPassword = "";
+										document.getElementById("password").innerHTML = "Your entered: ";								
+										while(Color_Array.length>0) {
+											Color_Array.pop();
+										}
+										} else if(Color_Array.length >= 4 && DbPassword !== GetPassword) {
+											// Say that password is wrong
+											var PasswordStatus = document.getElementById("PasswordStatus");
+											document.getElementById("password").innerHTML = "Your entered: ";								
+											PasswordStatus.innerHTML = "Password is wrong";
+											PasswordStatus.setAttribute("class", "Wrong");
+											DbPassword = "";
+											while(Color_Array.length>0) {
+												Color_Array.pop();
+											}
+										}
+									});
+								}); // JQuery Function Ends
+
+							} else {
+								document.getElementById("clickMe").setAttribute("class", "");
+								document.getElementById("textToDatabase").innerHTML = "";
+                    			document.getElementById("password").innerHTML = "Your entered: "								
+							}
+						}
+    </script>    
+    </body>
+
+</html>
